@@ -4,7 +4,7 @@ An [MCP](https://modelcontextprotocol.io) server that gives AI assistants Pakist
 Exchange data. It runs locally in Docker: the assistant loads PSX data (prices, screener,
 index constituents, sectors, filings, debt market, margin-eligible scrips) into a private
 in-memory DuckDB and answers your questions with SQL. It's built on
-[psxdata](https://github.com/mtauha/psxdata).
+[psxdata](https://github.com/psxdata/psxdata).
 
 **Requires:** [Docker](https://docs.docker.com/get-docker/).
 
@@ -15,7 +15,7 @@ in-memory DuckDB and answers your questions with SQL. It's built on
 **Claude Code** (plugin, recommended):
 
 ```bash
-claude plugin marketplace add mtauha/psxdata-mcp
+claude plugin marketplace add psxdata/psxdata-mcp
 claude plugin install psxdata@psxdata-mcp
 ```
 
