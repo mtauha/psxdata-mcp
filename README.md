@@ -10,7 +10,7 @@ in-memory DuckDB and answers your questions with SQL. It's built on
 
 ## Install
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_psxdata-0098FF?logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?%7B%22name%22%3A%22psxdata%22%2C%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22--rm%22%2C%22-v%22%2C%22psxdata-cache%3A%2Fhome%2Fapp%2F.psxdata%22%2C%22mtauha%2Fpsxdata-mcp%3Alatest%22%5D%7D)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_psxdata-0098FF?logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=psxdata&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22--rm%22%2C%22-v%22%2C%22psxdata-cache%3A%2Fhome%2Fapp%2F.psxdata%22%2C%22mtauha%2Fpsxdata-mcp%3Alatest%22%5D%7D)
 
 **Claude Code** (plugin, recommended):
 

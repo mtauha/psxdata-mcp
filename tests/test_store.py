@@ -1,7 +1,6 @@
 import datetime as dt
 from pathlib import Path
 
-import duckdb
 import pandas as pd
 import pytest
 
@@ -23,6 +22,13 @@ def test_replace_creates_and_overwrites() -> None:
     s.replace("t", _df("A"))
     s.replace("t", _df("B", 2))
     assert "| 2 |" in s.query("SELECT count(*) AS n FROM t")
+
+
+def test_replace_wraps_collision_with_agent_object() -> None:
+    s = Store()
+    s.query("CREATE VIEW t AS SELECT 1 AS x")
+    with pytest.raises(QueryError, match="t"):
+        s.replace("t", _df("A"))
 
 
 def test_upsert_replaces_only_scope_rows() -> None:
@@ -123,7 +129,7 @@ def test_failed_upsert_keeps_existing_rows() -> None:
     s = Store()
     s.upsert("prices", _df("A"), "symbol")
     bad = _df("A", 2).assign(close=["abc", "def"])
-    with pytest.raises(duckdb.Error):
+    with pytest.raises(QueryError):
         s.upsert("prices", bad, "symbol")
     assert s.scope_count("prices", "symbol", "A") == 3
 

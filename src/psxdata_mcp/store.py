@@ -78,6 +78,8 @@ class Store:
             self._con.register("_incoming", df)
             try:
                 self._con.execute(f'CREATE OR REPLACE TABLE "{table}" AS SELECT * FROM _incoming')
+            except duckdb.Error as exc:
+                raise QueryError(f"could not write table '{table}': {exc}") from exc
             finally:
                 self._con.unregister("_incoming")
             self._loaded[table] = datetime.now(UTC)
@@ -100,6 +102,8 @@ class Store:
                         raise
                 else:
                     self._con.execute(f'CREATE TABLE "{table}" AS SELECT * FROM _incoming')
+            except duckdb.Error as exc:
+                raise QueryError(f"could not write table '{table}': {exc}") from exc
             finally:
                 self._con.unregister("_incoming")
             self._loaded[table] = datetime.now(UTC)

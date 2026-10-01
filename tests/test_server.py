@@ -206,10 +206,27 @@ async def test_empty_fundamentals_for_symbol(client: Client) -> None:
     assert not err and "1 rows for PPL, LATER" in text
     err, text = await call(client, "load_fundamentals", symbols=["LATER"])
     assert not err
+    assert text == "fundamentals: PSX lists no filings for LATER."
+
+
+async def test_empty_fundamentals_reports_kept_rows(
+    client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    err, text = await call(client, "load_fundamentals", symbols=["OGDC"])
+    assert not err and "1 rows for OGDC" in text
+    monkeypatch.setattr(psxdata, "fundamentals", lambda symbol=None, cache=True: pd.DataFrame())
+    err, text = await call(client, "load_fundamentals", symbols=["OGDC"])
+    assert not err
     assert text == (
-        "fundamentals: PSX lists no filings for LATER; "
-        "any previously loaded rows for them were kept."
+        "fundamentals: PSX lists no filings for OGDC — kept the 1 previously loaded rows."
     )
+
+
+async def test_load_surfaces_agent_object_collision(client: Client) -> None:
+    err, _ = await call(client, "query", sql="CREATE VIEW prices AS SELECT 1 AS x")
+    assert not err
+    err, text = await call(client, "load_prices", symbols=["OGDC"])
+    assert err and "could not write table 'prices'" in text
 
 
 async def test_query_errors(client: Client) -> None:
