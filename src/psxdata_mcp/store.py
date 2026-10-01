@@ -87,11 +87,17 @@ class Store:
             self._con.register("_incoming", df)
             try:
                 if self._exists(table):
-                    self._con.execute(
-                        f'DELETE FROM "{table}" WHERE "{scope_col}" IN '
-                        f'(SELECT DISTINCT "{scope_col}" FROM _incoming)'
-                    )
-                    self._con.execute(f'INSERT INTO "{table}" BY NAME SELECT * FROM _incoming')
+                    self._con.execute("BEGIN TRANSACTION")
+                    try:
+                        self._con.execute(
+                            f'DELETE FROM "{table}" WHERE "{scope_col}" IN '
+                            f'(SELECT DISTINCT "{scope_col}" FROM _incoming)'
+                        )
+                        self._con.execute(f'INSERT INTO "{table}" BY NAME SELECT * FROM _incoming')
+                        self._con.execute("COMMIT")
+                    except BaseException:
+                        self._con.execute("ROLLBACK")
+                        raise
                 else:
                     self._con.execute(f'CREATE TABLE "{table}" AS SELECT * FROM _incoming')
             finally:

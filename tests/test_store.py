@@ -1,5 +1,7 @@
 import datetime as dt
+from pathlib import Path
 
+import duckdb
 import pandas as pd
 import pytest
 
@@ -98,7 +100,6 @@ def test_ddl_allowed() -> None:
 @pytest.mark.parametrize(
     "sql",
     [
-        "SELECT * FROM read_csv('/etc/passwd')",
         "SELECT * FROM read_csv('https://example.com/x.csv')",
         "ATTACH 'x.db'",
         "COPY (SELECT 1) TO 'out.csv'",
@@ -109,6 +110,22 @@ def test_ddl_allowed() -> None:
 def test_sandbox_blocks(sql: str) -> None:
     with pytest.raises(QueryError):
         Store().query(sql)
+
+
+def test_sandbox_blocks_reading_a_real_local_file(tmp_path: Path) -> None:
+    csv = tmp_path / "secret.csv"
+    csv.write_text("a,b\n1,2\n")
+    with pytest.raises(QueryError, match="(?i)permission|disabled|not allowed"):
+        Store().query(f"SELECT * FROM read_csv('{csv.as_posix()}')")
+
+
+def test_failed_upsert_keeps_existing_rows() -> None:
+    s = Store()
+    s.upsert("prices", _df("A"), "symbol")
+    bad = _df("A", 2).assign(close=["abc", "def"])
+    with pytest.raises(duckdb.Error):
+        s.upsert("prices", bad, "symbol")
+    assert s.scope_count("prices", "symbol", "A") == 3
 
 
 def test_timeout_then_connection_still_usable() -> None:
