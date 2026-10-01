@@ -1,0 +1,12 @@
+{
+  "name": "psxdata-mcp",
+  "description": "Pakistan Stock Exchange data for AI research: prices, screener, indices, sectors, fundamentals, debt market, and more—loaded into DuckDB and queryable with SQL.",
+  "owner": { "name": "Muhammad Tauha" },
+  "plugins": [
+    {
+      "name": "psxdata",
+      "source": "./",
+      "description": "PSX market data MCP server (Docker) for research with SQL."
+    }
+  ]
+}
