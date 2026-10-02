@@ -6,7 +6,8 @@ index constituents, sectors, filings, debt market, margin-eligible scrips) into 
 in-memory DuckDB and answers your questions with SQL. It's built on
 [psxdata](https://github.com/psxdata/psxdata).
 
-**Requires:** [Docker](https://docs.docker.com/get-docker/).
+**Requires:** [Docker](https://docs.docker.com/get-docker/), except for the Claude Desktop
+one-click bundle (see below), which needs [uv](https://docs.astral.sh/uv/) instead.
 
 ## Install
 
@@ -28,7 +29,13 @@ claude mcp add --transport stdio --scope user psxdata -- docker run -i --rm -v p
 **Cursor:** open this link:
 `cursor://anysphere.cursor-deeplink/mcp/install?name=psxdata&config=eyJjb21tYW5kIjoiZG9ja2VyIiwiYXJncyI6WyJydW4iLCItaSIsIi0tcm0iLCItdiIsInBzeGRhdGEtY2FjaGU6L2hvbWUvYXBwLy5wc3hkYXRhIiwibXRhdWhhL3BzeGRhdGEtbWNwOmxhdGVzdCJdfQ==`
 
-**Claude Desktop / any other client:** add to its MCP config (Claude Desktop:
+**Claude Desktop** (one-click): download `psxdata-mcp-<version>.mcpb` from the
+[latest release](https://github.com/psxdata/psxdata-mcp/releases/latest) and open it (or drag it
+into Settings → Extensions). This route needs no Docker, but it runs on [uv](https://docs.astral.sh/uv/),
+which it uses to fetch Python and the dependencies on first launch; install uv first if Claude
+Desktop reports it missing. The first launch takes a few seconds longer than later ones.
+
+**Any other client:** add to its MCP config (Claude Desktop's is
 `claude_desktop_config.json`):
 
 ```json
@@ -76,6 +83,9 @@ uv sync
 uv run pytest                    # unit + server tests
 uv run pytest -m live            # hits real PSX
 docker build -t psxdata-mcp:dev . && uv run pytest -m container
+uv run python scripts/stage_mcpb.py build/mcpb      # stage the Claude Desktop bundle
+npx @anthropic-ai/mcpb pack build/mcpb build/psxdata-mcp.mcpb
+PSXDATA_MCP_BUNDLE=build/psxdata-mcp.mcpb uv run pytest -m bundle
 npx @modelcontextprotocol/inspector docker run -i --rm psxdata-mcp:dev
 ```
 
