@@ -15,7 +15,9 @@ from mcp.server.mcpserver.exceptions import ToolError
 from psxdata.constants import INDEX_NAMES
 from psxdata.exceptions import PSXDataError, PSXRateLimitError, PSXUnavailableError
 
-from psxdata_mcp import __version__, loaders
+from psxdata_mcp import __version__
+from psxdata_mcp import loaders as default_loaders
+from psxdata_mcp.loaders import Loaders
 from psxdata_mcp.store import QueryError, Store
 
 MAX_SYMBOLS = 50
@@ -68,7 +70,7 @@ def _fmt_failures(failures: dict[str, str]) -> str:
     return ", ".join(f"{sym} ({why})" for sym, why in failures.items())
 
 
-def build_server(store: Store | None = None) -> MCPServer:
+def build_server(store: Store | None = None, loaders: Loaders = default_loaders) -> MCPServer:
     db = store or Store()
     server = MCPServer("psxdata", instructions=INSTRUCTIONS, version=__version__)
 
@@ -118,7 +120,7 @@ def build_server(store: Store | None = None) -> MCPServer:
         result = (
             await _psx(loaders.load_prices, valid, start, end)
             if valid
-            else loaders.LoadResult(pd.DataFrame())
+            else default_loaders.LoadResult(pd.DataFrame())
         )
         failures = {s: "unknown symbol" for s in unknown} | result.failures
         df = result.df
