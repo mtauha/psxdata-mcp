@@ -42,5 +42,6 @@ testpaths = ["tests"]
 markers = [
     "live: hits the real PSX website (opt-in: -m live)",
     "container: needs the Docker image built (opt-in: -m container)",
+    "bundle: needs a packed .mcpb (opt-in: -m bundle)",
 ]
-addopts = "-m 'not live and not container'"
+addopts = "-m 'not live and not container and not bundle'"

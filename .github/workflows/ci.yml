@@ -17,6 +17,19 @@ jobs:
       - run: uv run mypy src
       - run: uv run pytest -v
 
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run python scripts/stage_mcpb.py build/mcpb
+      - run: npx -y @anthropic-ai/mcpb@2.1.2 validate build/mcpb/manifest.json
+      - run: npx -y @anthropic-ai/mcpb@2.1.2 pack build/mcpb build/psxdata-mcp.mcpb
+      - run: uv run pytest -m bundle -v
+        env:
+          PSXDATA_MCP_BUNDLE: build/psxdata-mcp.mcpb
+
   container:
     runs-on: ubuntu-latest
     steps:
