@@ -2,4 +2,4 @@ import psxdata_mcp
 
 
 def test_version() -> None:
-    assert psxdata_mcp.__version__ == "0.1.1"
+    assert psxdata_mcp.__version__ == "0.1.2"
