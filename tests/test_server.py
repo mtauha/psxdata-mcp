@@ -280,3 +280,46 @@ async def test_nothing_written_to_stdout(
     await call(client, "list_tables")
     await call(client, "quote", symbol="PPL")
     assert capsys.readouterr().out == ""
+
+
+class RecordingLoaders:
+    """Delegates to the real loaders but records which functions the tools called."""
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def __getattr__(self, name: str) -> object:
+        real = getattr(loaders, name)
+        if not callable(real):
+            return real
+
+        def wrapper(*args: object, **kwargs: object) -> object:
+            self.calls.append(name)
+            return real(*args, **kwargs)
+
+        return wrapper
+
+
+async def test_build_server_uses_injected_loaders(fake_psx: dict[str, list[str]]) -> None:
+    rec = RecordingLoaders()
+    async with Client(build_server(Store(), loaders=rec)) as c:  # type: ignore[arg-type]
+        await call(c, "load_prices", symbols=["OGDC"])
+        await call(c, "load_screener")
+        await call(c, "quote", symbol="OGDC")
+        await call(c, "load_index", name="KSE100")
+        await call(c, "load_fundamentals", symbols=["OGDC"])
+    assert rec.calls == [
+        "known_symbols",
+        "load_prices",
+        "load_screener",
+        "load_quote",
+        "load_index",
+        "load_fundamentals",
+    ]
+
+
+async def test_build_server_positional_store_still_works(fake_psx: dict[str, list[str]]) -> None:
+    async with Client(build_server(Store())) as c:
+        err, text = await call(c, "load_prices", symbols=["OGDC"])
+    assert not err
+    assert text.startswith("prices: loaded 1 symbol(s)")

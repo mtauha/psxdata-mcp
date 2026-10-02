@@ -1,6 +1,6 @@
 {
   "name": "psxdata",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pakistan Stock Exchange data for Claude: load PSX prices, screener, indices, sectors and more into a local DuckDB and query them with SQL.",
   "author": { "name": "Muhammad Tauha" },
   "homepage": "https://github.com/psxdata/psxdata-mcp",
@@ -13,7 +13,7 @@
       "args": [
         "run", "-i", "--rm",
         "-v", "psxdata-cache:/home/app/.psxdata",
-        "mtauha/psxdata-mcp:0.1.0"
+        "mtauha/psxdata-mcp:0.1.1"
       ]
     }
   }
