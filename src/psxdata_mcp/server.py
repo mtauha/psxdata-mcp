@@ -18,6 +18,7 @@ from psxdata.exceptions import PSXDataError, PSXRateLimitError, PSXUnavailableEr
 from psxdata_mcp import __version__
 from psxdata_mcp import loaders as default_loaders
 from psxdata_mcp.loaders import Loaders
+from psxdata_mcp.prompts import register_prompts
 from psxdata_mcp.store import QueryError, Store
 
 MAX_SYMBOLS = 50
@@ -253,6 +254,7 @@ def build_server(store: Store | None = None, loaders: Loaders = default_loaders)
         row = df.iloc[0]
         return "\n".join(f"{k}: {'NULL' if pd.isna(v) else v}" for k, v in row.items())
 
+    register_prompts(server)
     return server
 
 

@@ -1,6 +1,8 @@
 import datetime as dt
 
 import pandas as pd
+import psxdata
+import pytest
 
 from psxdata_mcp import loaders
 
@@ -95,6 +97,17 @@ def test_snapshot_loaders(fake_psx: dict[str, list[str]]) -> None:
     assert len(loaders.load_sectors()) == 1
     assert len(loaders.load_symbols()) == 5
     assert loaders.load_quote("ogdc")["price"].tolist() == [200.0]
+
+
+def test_quote_finds_ticker_with_status_suffix(
+    fake_psx: dict[str, list[str]], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    screener = pd.DataFrame({"symbol": ["LUCKXD", "ABCNC"], "price": [900.0, 5.0]})
+    monkeypatch.setattr(psxdata, "screener", lambda cache=True: screener.copy())
+    monkeypatch.setattr(psxdata, "quote", lambda symbol, cache=True: pd.DataFrame())
+    assert loaders.load_quote("luck")["symbol"].tolist() == ["LUCKXD"]
+    assert loaders.load_quote("ABC")["price"].tolist() == [5.0]
+    assert loaders.load_quote("LUC").empty
 
 
 def test_debt_categories_labelled(fake_psx: dict[str, list[str]]) -> None:

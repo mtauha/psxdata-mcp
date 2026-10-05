@@ -68,6 +68,24 @@ Desktop reports it missing. The first launch takes a few seconds longer than lat
 Ask things like *"How has OGDC done against KSE-100 constituents this year?"* or *"Which cement
 stocks have a P/E under 6?"*
 
+## Skills
+
+Ready-made analysis workflows, served as MCP prompts (pick them from your client's prompt
+menu, e.g. `/mcp__psxdata__tearsheet` in Claude Code) and shipped as skills in the Claude Code
+plugin, which Claude loads on its own when a request matches.
+
+| Skill | What it does |
+|---|---|
+| `psx-playbook` | The rules every analysis follows: data traps, SQL patterns, web cross-checks |
+| `tearsheet(symbol)` | One-page report on a stock: performance, risk, valuation vs. sector, filings, news |
+| `screen(criteria?)` | Value, dividend or momentum presets, or your own conditions, with red flags |
+| `shariah-screen(screen?)` | The same screens limited to KMI All-Share members, with purification notes |
+| `compare(symbols, period?)` | 2–10 stocks side by side: returns, risk, correlation, valuation, price path |
+| `market-wrap(period?)` | Daily or weekly summary: KSE-100 drivers, breadth, sectors, movers, news |
+
+Sources live in `src/psxdata_mcp/skills/*.md`; `skills/` is generated from them with
+`uv run python scripts/sync_skills.py` (a test fails if the two drift).
+
 ## Good to know
 
 - Prices are PKR and **not adjusted** for splits, bonus issues or dividends.
