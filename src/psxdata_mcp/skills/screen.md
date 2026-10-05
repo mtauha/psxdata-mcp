@@ -21,26 +21,10 @@ KMI30"). Apply both.
 
 ## 2. Build the universe
 
-Call `load_screener()` and `load_symbols()`, then create a view everything else reads from:
+Call `load_screener()` and `load_symbols()`, then create the playbook's `universe` view
+(the suffix-tolerant join with sector medians). Every query below reads from it.
 
-```sql
-CREATE OR REPLACE VIEW universe AS
-WITH base AS (
-  SELECT s.symbol, y.name, y.sector_name AS sector, s.price, s.listed_in,
-         CASE WHEN nullif(s.pe_ratio, 0) < 100 THEN s.pe_ratio END AS pe,
-         CASE WHEN nullif(s.dividend_yield, 0) < 30 THEN s.dividend_yield END AS dy,
-         s.change_1y_pct AS chg_1y,
-         s.price * s.volume_avg_30d / 1e6 AS traded_pkr_m
-  FROM screener s JOIN symbols y USING (symbol)
-  WHERE NOT y.is_etf AND NOT y.is_debt
-)
-SELECT b.*, m.sector_pe, m.n_pe
-FROM base b
-JOIN (SELECT sector, median(pe) AS sector_pe, count(pe) AS n_pe FROM base GROUP BY sector) m
-  USING (sector)
-```
-
-**Liquidity floor:** keep `traded_pkr_m >= 10` (PKR 10 million a day, about 180 stocks)
+**Liquidity floor:** keep `traded_pkr_m >= 10` (PKR 10 million a day, about 200 stocks)
 unless the user sets another. Illiquid names otherwise flood every screen.
 
 ## 3. Presets
@@ -57,7 +41,7 @@ instead of 8 and say so: a yield above the risk-free rate is the useful comparis
 - Hosted (`load_mart` exists): load `fact_cross_sectional_rankings` for the latest few days.
   Keep the latest `date` with `momentum_63d_quintile = 1` and `relative_strength_63d_quintile
   = 1`, ranked by `relative_strength_63d`. This covers KSE-100 names only; say so.
-- Local: take the top 25 liquid names by `chg_1y`, then call `load_prices` for them from about
+- Local: take the top 25 liquid names by `chg_1y`, then call `load_prices` for their `base_symbol`s from about
   4 months ago. Keep names whose 3-month return is also positive, ranked by 3-month return.
   Run the playbook's corporate-action check on the finalists: a bonus or split drop can hide a
   winner, and a missed one can fake a loser.
@@ -85,6 +69,9 @@ Add a `flags` column to every result row:
 - `1Y<-50%`: possible distress, or an unadjusted bonus or split.
 - `yield>15%`: probably a special dividend or a price collapse.
 - `no P/E`: loss-making or missing data.
+- `NC`: the ticker carries the non-compliant suffix (`status` contains `NC`).
+- `ex-div` / `ex-bonus`: `status` is `XD` / `XB`; the price just dropped by the payout, so
+  yield and 1Y return are distorted.
 
 If you can search the web, check recent news for the top 5 names, and add a flag for anything
 material (losses, regulatory action, default, delisting notice), citing the source.

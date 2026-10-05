@@ -13,8 +13,13 @@ Follow these rules whenever you analyse PSX data with the psxdata tools.
   `nullif(pe_ratio, 0)` and `nullif(dividend_yield, 0)`.
 - **Outliers exist.** P/E values in the thousands and yields above 100% appear. Drop them from
   medians and screens (`pe < 100`, `dy < 30`) and say you did.
-- **`screener.sector` is a numeric code.** Get the name by joining
-  `symbols` on `symbol` (`symbols.sector_name`).
+- **Tickers carry status suffixes.** While a status applies, PSX appends it to the ticker:
+  `XD` ex-dividend, `XB` ex-bonus, `XR` ex-rights, `XA` ex-all, and `NC` non-compliant with
+  listing rules (a red flag: late accounts, missed AGMs). `screener` and `index_constituents`
+  use the suffixed ticker (`LUCKXD`), but `symbols` and `prices` use the base (`LUCK`). A plain
+  join silently drops about 15% of the market; use the join below.
+- **`screener.sector` is a numeric code.** Get the name from `symbols.sector_name` with the
+  suffix-tolerant join below.
 - **`market_cap` and `free_float` in `screener` are mostly NULL.** Don't rank or filter on them
   unless you checked the coverage. For index names, `index_constituents.market_cap_m` is
   reliable.
@@ -50,15 +55,33 @@ SELECT
 For other horizons, take the last close on or before `last.d - INTERVAL 1 MONTH` (3 MONTH, …)
 with `arg_max(close, date)`. Annualise with `sqrt(252)` to match the warehouse marts.
 
-Sector peers and medians (zeros and outliers removed):
+Screener joined to names and sectors (suffix-tolerant), with sector medians:
 
 ```sql
-SELECT y.sector_name,
-       median(nullif(s.pe_ratio, 0)) FILTER (nullif(s.pe_ratio, 0) < 100) AS med_pe,
-       median(nullif(s.dividend_yield, 0)) FILTER (nullif(s.dividend_yield, 0) < 30) AS med_dy
-FROM screener s JOIN symbols y USING (symbol)
-GROUP BY ALL
+CREATE OR REPLACE VIEW universe AS
+WITH base AS (
+  SELECT s.symbol, coalesce(y1.symbol, y2.symbol) AS base_symbol,
+         regexp_extract(s.symbol, '(XD|XB|XR|XA|NC)+$') AS status,
+         coalesce(y1.name, y2.name) AS name, coalesce(y1.sector_name, y2.sector_name) AS sector,
+         s.price, s.listed_in,
+         CASE WHEN nullif(s.pe_ratio, 0) < 100 THEN s.pe_ratio END AS pe,
+         CASE WHEN nullif(s.dividend_yield, 0) < 30 THEN s.dividend_yield END AS dy,
+         s.change_1y_pct AS chg_1y,
+         s.price * s.volume_avg_30d / 1e6 AS traded_pkr_m
+  FROM screener s
+  LEFT JOIN symbols y1 ON y1.symbol = s.symbol
+  LEFT JOIN symbols y2 ON y2.symbol = regexp_replace(s.symbol, '(XD|XB|XR|XA|NC)+$', '')
+  WHERE NOT coalesce(y1.is_etf, y2.is_etf, false) AND NOT coalesce(y1.is_debt, y2.is_debt, false)
+)
+SELECT b.*, m.sector_pe, m.n_pe
+FROM base b
+JOIN (SELECT sector, median(pe) AS sector_pe, count(pe) AS n_pe FROM base GROUP BY sector) m
+  USING (sector)
 ```
+
+It needs `load_screener()` and `load_symbols()`. Zero valuations become NULL and outliers are
+dropped. Use `base_symbol` for `load_prices` and `prices`, and `symbol` for screener and index
+tables.
 
 ## 3. Corporate-action check
 

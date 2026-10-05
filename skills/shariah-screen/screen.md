@@ -1,13 +1,3 @@
----
-name: screen
-description: Find PSX stocks matching conditions — ready-made value, dividend and momentum screens, or the user's own criteria (P/E, yield, sector, index, liquidity, returns). Use when asked which PSX stocks are cheap, pay high dividends, are trending, or meet a list of conditions.
----
-
-Read `playbook.md` in this folder before you start.
-
-Inputs (ask the user for any required one that is missing):
-- `criteria` (optional): value, dividend, momentum, or your own conditions, e.g. "banks with P/E under 6"
-
 # Stock screen
 
 Shortlist PSX stocks that match a preset or the user's own conditions. Follow the PSX playbook

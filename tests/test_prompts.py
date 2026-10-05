@@ -49,6 +49,7 @@ def test_skill_files_are_well_formed() -> None:
         names = {a.name for a in skill.arguments}
         placeholders = {p.split("}")[0] for p in skill.task.split("{")[1:]}
         assert placeholders <= names, skill.name
+        assert set(skill.includes) <= set(skills) - {PLAYBOOK, skill.name}, skill.name
 
 
 def test_plugin_skills_match_sources() -> None:
@@ -60,8 +61,13 @@ def test_plugin_skills_match_sources() -> None:
     for skill in skills.values():
         folder = ROOT / "skills" / skill.name
         assert (folder / "SKILL.md").read_text(encoding="utf-8") == render_skill_md(skill)
+        expected = {"SKILL.md"} | {f"{n}.md" for n in skill.includes}
         if skill.name != PLAYBOOK:
+            expected.add("playbook.md")
             assert (folder / "playbook.md").read_text(encoding="utf-8") == playbook
+        assert {p.name for p in folder.iterdir()} == expected
+        for name in skill.includes:
+            assert (folder / f"{name}.md").read_text(encoding="utf-8") == skills[name].body
 
 
 @pytest.mark.anyio
@@ -106,3 +112,12 @@ async def test_optional_argument_can_be_omitted(client: Client) -> None:
     r = await client.get_prompt("screen", {"criteria": "banks with P/E under 6"})
     text = r.messages[0].content.text
     assert text.startswith("Run a PSX stock screen. Criteria: banks with P/E under 6")
+
+
+@pytest.mark.anyio
+async def test_included_skill_is_appended_before_playbook(client: Client) -> None:
+    r = await client.get_prompt("shariah-screen", {"screen": "dividend"})
+    text = r.messages[0].content.text
+    assert text.startswith("Run a Shariah-compliant PSX screen. Screen: dividend")
+    order = [text.index(h) for h in ("# Shariah-compliant", "# Stock screen", "# PSX analysis")]
+    assert order == sorted(order)

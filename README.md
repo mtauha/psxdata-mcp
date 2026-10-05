@@ -79,6 +79,7 @@ plugin, which Claude loads on its own when a request matches.
 | `psx-playbook` | The rules every analysis follows: data traps, SQL patterns, web cross-checks |
 | `tearsheet(symbol)` | One-page report on a stock: performance, risk, valuation vs. sector, filings, news |
 | `screen(criteria?)` | Value, dividend or momentum presets, or your own conditions, with red flags |
+| `shariah-screen(screen?)` | The same screens limited to KMI All-Share members, with purification notes |
 
 Sources live in `src/psxdata_mcp/skills/*.md`; `skills/` is generated from them with
 `uv run python scripts/sync_skills.py` (a test fails if the two drift).

@@ -17,8 +17,9 @@ patterns.
 
 1. **Snapshot.** Call `quote(symbol)`. If the symbol is unknown, stop and suggest close matches
    from `load_symbols()`.
-2. **Peers.** Call `load_screener()` and `load_symbols()` so the stock can be compared with its
-   sector.
+2. **Peers.** Call `load_screener()` and `load_symbols()` and create the playbook's
+   `universe` view. Find the stock by `base_symbol`; its screener ticker may carry a suffix
+   (`LUCKXD`). An `NC` suffix goes in the bottom line as a red flag.
 3. **Prices.** Call `load_prices([symbol], start=<about 13 months ago>)`.
    - If `load_mart` exists (hosted server) and the stock is a KSE-100 name, also load for the
      same window: `fact_index_ohlcv` (benchmark), `fact_technical_indicators`,
@@ -32,9 +33,9 @@ patterns.
      from `fact_ticker_relationships`. Cross-check your numbers against
      `fact_technical_indicators`.
    - Local: compare 1Y return with the median `change_1y_pct` of sector peers instead.
-6. **Valuation.** From `screener`: P/E and dividend yield vs. sector medians (zeros as NULL,
-   outliers dropped), and the stock's rank within the sector. Hosted: add where today's P/E
-   sits in its own one-year range from `fact_valuation_daily`.
+6. **Valuation.** From `universe`: P/E and dividend yield vs. sector medians, and the stock's
+   rank within the sector. Hosted: add where today's P/E sits in its own one-year range from
+   `fact_valuation_daily`.
 7. **Filings.** Call `load_fundamentals([symbol])` and list the latest 4 reports (type, period,
    posting date, link).
 8. **Context (web, if available).** Find dividends declared in the last 12 months, any

@@ -8,10 +8,12 @@ Each file has a small front matter block:
     description: One line used by clients to pick the skill.
     argument: symbol | required | PSX ticker, e.g. OGDC     (repeatable, optional)
     task: Build a tearsheet for {symbol}.                    (optional)
+    includes: screen                                         (optional, comma-separated)
     ---
 
 The playbook (PLAYBOOK) is the shared rulebook: every other skill gets it appended when served
 as an MCP prompt, and shipped as playbook.md beside SKILL.md in the Claude Code plugin.
+Included skills are handled the same way (appended, or shipped as <name>.md).
 """
 
 from __future__ import annotations
@@ -42,6 +44,7 @@ class Skill:
     body: str
     arguments: tuple[Argument, ...] = ()
     task: str = ""
+    includes: tuple[str, ...] = ()
 
 
 def parse(text: str) -> Skill:
@@ -67,6 +70,7 @@ def parse(text: str) -> Skill:
         body=body.strip() + "\n",
         arguments=tuple(args),
         task=fields.get("task", ""),
+        includes=tuple(n.strip() for n in fields.get("includes", "").split(",") if n.strip()),
     )
 
 
@@ -78,14 +82,15 @@ def load_skills() -> dict[str, Skill]:
     return {s.name: s for s in sorted(skills, key=lambda s: (s.name != PLAYBOOK, s.name))}
 
 
-def render_prompt(skill: Skill, playbook: Skill, values: dict[str, str]) -> str:
-    """Text of the MCP prompt: task line, skill body, then the playbook it relies on."""
+def render_prompt(skill: Skill, skills: dict[str, Skill], values: dict[str, str]) -> str:
+    """Text of the MCP prompt: task line, skill body, included skills, then the playbook."""
     parts = []
     if skill.task:
         parts.append(skill.task.format(**values))
     parts.append(skill.body)
-    if skill.name != playbook.name:
-        parts.append(f"---\n\n{playbook.body}")
+    parts += [f"---\n\n{skills[name].body}" for name in skill.includes]
+    if skill.name != PLAYBOOK:
+        parts.append(f"---\n\n{skills[PLAYBOOK].body}")
     return "\n\n".join(p.strip() for p in parts) + "\n"
 
 
@@ -93,7 +98,9 @@ def render_skill_md(skill: Skill) -> str:
     """SKILL.md for the Claude Code plugin; the playbook ships beside it as playbook.md."""
     sections = [f"---\nname: {skill.name}\ndescription: {skill.description}\n---"]
     if skill.name != PLAYBOOK:
-        sections.append("Read `playbook.md` in this folder before you start.")
+        refs = ", ".join(f"`{name}.md`" for name in skill.includes)
+        also = f" and {refs}" if refs else ""
+        sections.append(f"Read `playbook.md`{also} in this folder before you start.")
     if skill.arguments:
         inputs = "\n".join(
             f"- `{a.name}` ({'required' if a.required else 'optional'}): {a.description}"
@@ -104,22 +111,24 @@ def render_skill_md(skill: Skill) -> str:
     return "\n\n".join(sections)
 
 
-def _renderer(skill: Skill, playbook: Skill) -> Callable[..., str]:
+def _renderer(skill: Skill, skills: dict[str, Skill]) -> Callable[..., str]:
     known = {a.name for a in skill.arguments}
 
     def render(**values: Any) -> str:
         clean = {k: str(values.get(k) or "").strip() or "(not given)" for k in known}
         if "symbol" in clean:
             clean["symbol"] = clean["symbol"].upper()
-        return render_prompt(skill, playbook, clean)
+        return render_prompt(skill, skills, clean)
 
     return render
 
 
 def register_prompts(server: MCPServer, skills: dict[str, Skill] | None = None) -> None:
     skills = skills or load_skills()
-    playbook = skills[PLAYBOOK]
     for skill in skills.values():
+        unknown = [n for n in skill.includes if n not in skills]
+        if unknown:
+            raise ValueError(f"{skill.name} includes unknown skills: {unknown}")
         server.add_prompt(
             Prompt(
                 name=skill.name,
@@ -129,7 +138,7 @@ def register_prompts(server: MCPServer, skills: dict[str, Skill] | None = None) 
                     PromptArgument(name=a.name, description=a.description, required=a.required)
                     for a in skill.arguments
                 ],
-                fn=_renderer(skill, playbook),
+                fn=_renderer(skill, skills),
                 context_kwarg=None,
             )
         )

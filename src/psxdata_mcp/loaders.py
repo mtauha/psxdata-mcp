@@ -134,8 +134,22 @@ def load_symbols() -> pd.DataFrame:
     return normalize(psxdata.symbols())
 
 
+# PSX appends status suffixes to a ticker while they apply: XD ex-dividend, XB ex-bonus,
+# XR ex-rights, XA ex-all, NC non-compliant with listing rules. The screener lists LUCKXD, not LUCK.
+STATUS_SUFFIX = re.compile(r"(XD|XB|XR|XA|NC)+$")
+
+
 def load_quote(symbol: str) -> pd.DataFrame:
-    return normalize(psxdata.quote(symbol.upper()))
+    sym = symbol.upper()
+    df = normalize(psxdata.quote(sym))
+    if not df.empty:
+        return df
+    screener = load_screener()
+    if "symbol" not in screener.columns:
+        return df
+    base = screener["symbol"].astype(str).str.replace(STATUS_SUFFIX, "", regex=True)
+    hit = screener[base == sym]
+    return hit.reset_index(drop=True) if len(hit) == 1 else df
 
 
 def load_index(name: str) -> pd.DataFrame:

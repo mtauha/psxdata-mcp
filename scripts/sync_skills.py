@@ -23,6 +23,8 @@ def build(dest: Path) -> None:
         (folder / "SKILL.md").write_text(render_skill_md(skill), encoding="utf-8")
         if skill.name != PLAYBOOK:
             (folder / "playbook.md").write_text(playbook.body, encoding="utf-8")
+        for name in skill.includes:
+            (folder / f"{name}.md").write_text(skills[name].body, encoding="utf-8")
 
 
 def main() -> None:
