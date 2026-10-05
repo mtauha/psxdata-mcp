@@ -97,3 +97,12 @@ async def test_missing_required_argument_is_an_error(client: Client) -> None:
     # The SDK reports render errors to clients as a generic internal error.
     with pytest.raises(Exception):  # noqa: B017
         await client.get_prompt("tearsheet", {})
+
+
+@pytest.mark.anyio
+async def test_optional_argument_can_be_omitted(client: Client) -> None:
+    r = await client.get_prompt("screen")
+    assert r.messages[0].content.text.startswith("Run a PSX stock screen. Criteria: (not given)")
+    r = await client.get_prompt("screen", {"criteria": "banks with P/E under 6"})
+    text = r.messages[0].content.text
+    assert text.startswith("Run a PSX stock screen. Criteria: banks with P/E under 6")

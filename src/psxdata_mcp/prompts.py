@@ -108,7 +108,7 @@ def _renderer(skill: Skill, playbook: Skill) -> Callable[..., str]:
     known = {a.name for a in skill.arguments}
 
     def render(**values: Any) -> str:
-        clean = {k: str(v).strip() for k, v in values.items() if k in known}
+        clean = {k: str(values.get(k) or "").strip() or "(not given)" for k in known}
         if "symbol" in clean:
             clean["symbol"] = clean["symbol"].upper()
         return render_prompt(skill, playbook, clean)
