@@ -20,6 +20,16 @@ claude plugin marketplace add psxdata/psxdata-mcp
 claude plugin install psxdata@psxdata-mcp
 ```
 
+**Claude Code** (plugin, hosted server: invite-only, no Docker, adds warehouse marts):
+
+```bash
+claude plugin marketplace add psxdata/psxdata-mcp
+claude plugin install psxdata-hosted@psxdata-mcp
+```
+
+Claude Code asks for the server URL when the plugin is enabled; use the one from your invitation.
+Then run `/mcp` and sign in to `psxdata`. Install one of the two plugins, not both.
+
 **Claude Code** (server only):
 
 ```bash
