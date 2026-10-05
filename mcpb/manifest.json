@@ -3,7 +3,7 @@
   "manifest_version": "0.4",
   "name": "psxdata",
   "display_name": "PSX Data",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Pakistan Stock Exchange data for Claude: load PSX prices, screener, indices, sectors and more into a local DuckDB and query them with SQL.",
   "author": { "name": "Muhammad Tauha" },
   "homepage": "https://github.com/psxdata/psxdata-mcp",
