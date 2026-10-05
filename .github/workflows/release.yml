@@ -61,4 +61,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.v.outputs.version }}
-        run: gh release create "$GITHUB_REF_NAME" --generate-notes "build/psxdata-mcp-$VERSION.mcpb"
+        # A release drafted in the GitHub UI creates the tag first; attach the bundle to it then.
+        run: |
+          bundle="build/psxdata-mcp-$VERSION.mcpb"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$bundle" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" --generate-notes "$bundle"
+          fi
