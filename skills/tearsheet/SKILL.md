@@ -36,7 +36,7 @@ patterns.
    outliers dropped), and the stock's rank within the sector. Hosted: add where today's P/E
    sits in its own one-year range from `fact_valuation_daily`.
 7. **Filings.** Call `load_fundamentals([symbol])` and list the latest 4 reports (type, period,
-   posting date, link). Use the REST API fallback from the playbook if the tool fails.
+   posting date, link).
 8. **Context (web, if available).** Find dividends declared in the last 12 months, any
    corporate actions, and the 2–3 most important news items from the last 90 days. Add one
    macro line (SBP policy rate vs. the dividend yield). Cite each item with source and date.
