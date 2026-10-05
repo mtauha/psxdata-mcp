@@ -52,14 +52,15 @@ def test_skill_files_are_well_formed() -> None:
         assert set(skill.includes) <= set(skills) - {PLAYBOOK, skill.name}, skill.name
 
 
-def test_plugin_skills_match_sources() -> None:
-    """skills/ is generated; run `uv run python scripts/sync_skills.py` after editing sources."""
+@pytest.mark.parametrize("dest", ["skills", "plugins/psxdata-hosted/skills"])
+def test_plugin_skills_match_sources(dest: str) -> None:
+    """Both plugins' skills are generated; run `uv run python scripts/sync_skills.py`."""
     skills = load_skills()
-    on_disk = {p.name for p in (ROOT / "skills").iterdir() if p.is_dir()}
+    on_disk = {p.name for p in (ROOT / dest).iterdir() if p.is_dir()}
     assert on_disk == set(skills)
     playbook = skills[PLAYBOOK].body
     for skill in skills.values():
-        folder = ROOT / "skills" / skill.name
+        folder = ROOT / dest / skill.name
         assert (folder / "SKILL.md").read_text(encoding="utf-8") == render_skill_md(skill)
         expected = {"SKILL.md"} | {f"{n}.md" for n in skill.includes}
         if skill.name != PLAYBOOK:

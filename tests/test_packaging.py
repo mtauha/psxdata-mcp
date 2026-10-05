@@ -47,6 +47,33 @@ def test_stage_mcpb_collects_bundle_files(tmp_path: Path) -> None:
 def test_marketplace_points_at_repo_root() -> None:
     market = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text())
     assert market["name"] == "psxdata-mcp"
-    [entry] = market["plugins"]
-    assert entry["name"] == "psxdata"
-    assert entry["source"] == "./"
+    entries = {e["name"]: e for e in market["plugins"]}
+    assert set(entries) == {"psxdata", "psxdata-hosted"}
+    assert entries["psxdata"]["source"] == "./"
+    assert entries["psxdata-hosted"]["source"] == "./plugins/psxdata-hosted"
+
+
+def test_hosted_plugin_points_at_hosted_server() -> None:
+    root = ROOT / "plugins" / "psxdata-hosted"
+    plugin = json.loads((root / ".claude-plugin" / "plugin.json").read_text())
+    assert plugin["name"] == "psxdata-hosted"
+    assert plugin["version"] == _version()
+    assert plugin["mcpServers"]["psxdata"] == {"type": "http", "url": "${user_config.server_url}"}
+    option = plugin["userConfig"]["server_url"]
+    assert option["required"] and option["sensitive"]
+
+
+def test_hosted_server_url_is_not_published() -> None:
+    """The hosted URL is shared privately with invited users; keep it out of this public repo."""
+    tracked = subprocess.run(
+        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout.split()
+    this_file = Path(__file__).resolve().relative_to(ROOT).as_posix()
+    leaks = [
+        f
+        for f in tracked
+        if f != this_file
+        and (ROOT / f).is_file()
+        and "workers.dev" in (ROOT / f).read_text(encoding="utf-8", errors="ignore")
+    ]
+    assert not leaks

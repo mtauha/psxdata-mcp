@@ -23,10 +23,12 @@ jobs:
         run: |
           py=$(python3 -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           plugin=$(python3 -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['version'])")
+          hosted=$(python3 -c "import json;print(json.load(open('plugins/psxdata-hosted/.claude-plugin/plugin.json'))['version'])")
           bundle=$(python3 -c "import json;print(json.load(open('mcpb/manifest.json'))['version'])")
-          echo "tag=$VERSION pyproject=$py plugin=$plugin bundle=$bundle"
+          echo "tag=$VERSION pyproject=$py plugin=$plugin hosted=$hosted bundle=$bundle"
           test "$VERSION" = "$py"
           test "$VERSION" = "$plugin"
+          test "$VERSION" = "$hosted"
           test "$VERSION" = "$bundle"
 
       - uses: astral-sh/setup-uv@v6
