@@ -121,3 +121,13 @@ async def test_included_skill_is_appended_before_playbook(client: Client) -> Non
     assert text.startswith("Run a Shariah-compliant PSX screen. Screen: dividend")
     order = [text.index(h) for h in ("# Shariah-compliant", "# Stock screen", "# PSX analysis")]
     assert order == sorted(order)
+
+
+@pytest.mark.anyio
+async def test_two_argument_prompt(client: Client) -> None:
+    prompts = {p.name: p for p in (await client.list_prompts()).prompts}
+    args = {a.name: a.required for a in prompts["compare"].arguments or []}
+    assert args == {"symbols": True, "period": False}
+    r = await client.get_prompt("compare", {"symbols": "OGDC, PPL"})
+    text = r.messages[0].content.text
+    assert text.startswith("Compare these PSX stocks: OGDC, PPL. Period: (not given)")
