@@ -123,6 +123,11 @@ and consistent:
 | Sector rotation, breadth, correlation | `fact_sector_rotation`, `fact_sector_daily`, `fact_sector_correlation` |
 | Historical index membership and weights | `fact_index_membership` |
 
+**Freshness:** check `max(date)` of every mart you use against the latest date in `prices` or
+the screener snapshot. Marts can lag (the KSE-100 index series has stalled before while the
+others kept updating). If a mart is behind, say so and use the local method for the missing
+days.
+
 Read column meanings with
 `query("SELECT column_name, comment FROM duckdb_columns() WHERE table_name = '<mart>'")`.
 Without `load_mart` (local server), compute the same figures from `prices` with the patterns

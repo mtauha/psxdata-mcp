@@ -81,6 +81,7 @@ plugin, which Claude loads on its own when a request matches.
 | `screen(criteria?)` | Value, dividend or momentum presets, or your own conditions, with red flags |
 | `shariah-screen(screen?)` | The same screens limited to KMI All-Share members, with purification notes |
 | `compare(symbols, period?)` | 2–10 stocks side by side: returns, risk, correlation, valuation, price path |
+| `market-wrap(period?)` | Daily or weekly summary: KSE-100 drivers, breadth, sectors, movers, news |
 
 Sources live in `src/psxdata_mcp/skills/*.md`; `skills/` is generated from them with
 `uv run python scripts/sync_skills.py` (a test fails if the two drift).
